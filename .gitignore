@@ -1,0 +1,3 @@
+nsight-compute/*
+
+!nsight-compute/.gitkeep
