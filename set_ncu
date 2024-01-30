@@ -1,0 +1,1 @@
+export PATH="nsight-compute/2023.2.0/:$PATH"
