@@ -1,4 +1,5 @@
 #!/bin/bash
+echo "Begin Preparing Your Workspace"
 echo "Downloading Nsight Compute 2023.2.0..."
 wget -O ncu_2023.2.0.tar.gz https://utexas.box.com/shared/static/zf8w3ioehjuy7qojaglnkqm4njvf65e4.gz -q --show-progress
 echo "Extracting Nsight Compute 2023.2.0..."

@@ -1,0 +1,10 @@
+echo "Activating CUDA Toolkit 12.0 Module from TACC..."
+module load cuda/12.0
+
+echo "Setting-up NCU Path..."
+SCRIPT=$(readlink --canonicalize --no-newline $BASH_SOURCE)
+SCRIPTPATH=$(dirname "$SCRIPT")
+export PATH="$SCRIPTPATH/nsight-compute/2023.2.0/:$PATH"
+
+echo "Activating Python Virtual Environment..."
+source application/venv/bin/activate

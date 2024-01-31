@@ -4,5 +4,7 @@ application/train/*
 application/val/*
 application/venv/*
 kernel
+ncu_2023.2.0.tar.gz
+catdog.tar.gz
 
 !nsight-compute/.gitkeep

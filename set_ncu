@@ -1,3 +1,0 @@
-SCRIPT=$(readlink --canonicalize --no-newline $BASH_SOURCE)
-SCRIPTPATH=$(dirname "$SCRIPT")
-export PATH="$SCRIPTPATH/nsight-compute/2023.2.0/:$PATH"
