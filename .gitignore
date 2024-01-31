@@ -1,3 +1,6 @@
 nsight-compute/*
+application/test/*
+application/train/*
+application/val/*
 
 !nsight-compute/.gitkeep
