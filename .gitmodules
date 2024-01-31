@@ -1,0 +1,4 @@
+[submodule "kernel"]
+	path = kernel
+	url = https://github.com/hibagus/CUDA_Bench.git
+	branch = ECE382N_GPU_Lab
