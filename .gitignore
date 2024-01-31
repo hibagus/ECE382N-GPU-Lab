@@ -2,5 +2,7 @@ nsight-compute/*
 application/test/*
 application/train/*
 application/val/*
+application/venv/*
+kernel
 
 !nsight-compute/.gitkeep
