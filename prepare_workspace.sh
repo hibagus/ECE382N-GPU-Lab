@@ -24,7 +24,7 @@ pip3 install -r application/requirements.txt
 echo "Cloning CUDA Bench Repository..."
 git submodule update --init --recursive
 echo "Loading CUDA Toolkit on TACC Lonestar6"
-module load cuda/12.0
+module load cuda/11.4
 echo "Preparing CUDA Bench Build Environment..."
 cd kernel && mkdir -p build && cd build
 echo "Generating Makefile for CUDA Bench..."
