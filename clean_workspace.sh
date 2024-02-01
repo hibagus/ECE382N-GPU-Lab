@@ -6,7 +6,6 @@ echo    # (optional) move to a new line
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
     echo "Cleaning-up Workspace..."
-    deactivate
     rm -rf nsight-compute/*
     rm -rf application/val
     rm -rf application/train
