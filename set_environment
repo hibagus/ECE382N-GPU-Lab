@@ -1,8 +1,8 @@
 SCRIPT=$(readlink --canonicalize --no-newline $BASH_SOURCE)
 SCRIPTPATH=$(dirname "$SCRIPT")
 
-echo "Activating CUDA Toolkit 11.4 Module from TACC..."
-module load cuda/11.4
+echo "Activating CUDA Toolkit 12.0 Module from TACC..."
+module load cuda/12.0
 
 echo "Setting-up NCU Path..."
 export PATH="$SCRIPTPATH/nsight-compute/2023.2.0/:$PATH"
@@ -10,5 +10,5 @@ export PATH="$SCRIPTPATH/nsight-compute/2023.2.0/:$PATH"
 echo "Activating Python Virtual Environment..."
 source "$SCRIPTPATH/application/venv/bin/activate"
 
-#echo "Override TACC NVIDIA nvjitlink..."
-#export LD_LIBRARY_PATH="$SCRIPTPATH/application/venv/lib/python3.9/site-packages/nvidia/nvjitlink/lib/:$LD_LIBRARY_PATH"
+echo "Override TACC NVIDIA nvjitlink..."
+export LD_LIBRARY_PATH="$SCRIPTPATH/application/venv/lib/python3.9/site-packages/nvidia/nvjitlink/lib/:$LD_LIBRARY_PATH"
