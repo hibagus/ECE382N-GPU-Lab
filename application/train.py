@@ -110,8 +110,6 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs, timestamp, d
 #%% Argument Parser Section
 def parse_args():
     parser=argparse.ArgumentParser(description="ECE382N - Computer Performance Evaluation/Benchmark | GPU Lab | ResNet50 model finetuning using GPUs.")
-    parser.add_argument("--data_dir",       type=str,  action="store",      default="./",         help="Dataset directory path.")
-    parser.add_argument("--checkpoint_dir", type=str,  action="store",      default="checkpoint", help="Checkpoint directory path.")
     parser.add_argument("--num_epoch",      type=int,  action="store",      default=15,           help="Number of epoch for training to run.")
     parser.add_argument("--batch_size",     type=int,  action="store",      default=1000,         help="Batch size for training.")
     parser.add_argument("--num_worker",     type=int,  action="store",      default=64,           help="Number of data loader worker.")
@@ -123,6 +121,10 @@ def parse_args():
 #%% Main Section
 def main():
     args = parse_args()
+    
+    # Root Folder
+    data_dir       = os.path.abspath(os.path.dirname(__file__))
+    checkpoint_dir = 'checkpoint'
     
     # Detect CUDA-capable Device
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -169,7 +171,7 @@ def main():
     }
     
     # Define the data transformation
-    image_datasets = {x: datasets.ImageFolder(os.path.join(args.data_dir, x),
+    image_datasets = {x: datasets.ImageFolder(os.path.join(data_dir, x),
                                               data_transforms[x])
                       for x in ['train', 'val']}
     
@@ -189,7 +191,7 @@ def main():
     model_conv  = torchvision.models.resnet50(weights=ResNet50_Weights.DEFAULT)
 
     # Define the checkpoint location to save the trained model
-    chk_dir     = f'{args.data_dir}/{args.checkpoint_dir}'
+    chk_dir     = f'{data_dir}/{checkpoint_dir}'
     check_point = f'{chk_dir}/model-checkpoint-{args.precision}.tar'
     
     # Parameters of newly constructed modules have requires_grad=True by default

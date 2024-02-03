@@ -16,9 +16,6 @@ from PIL import Image
 #%% Argument Parser Section
 def parse_args():
     parser=argparse.ArgumentParser(description="ECE382N - Computer Performance Evaluation/Benchmark | GPU Lab | ResNet50 model inference using GPUs.")
-    parser.add_argument("--data_dir",       type=str,  action="store",      default="./",         help="Dataset directory path.")
-    parser.add_argument("--test_data_dir",  type=str,  action="store",      default="test",       help="Test dataset directory path.")
-    parser.add_argument("--checkpoint_dir", type=str,  action="store",      default="checkpoint", help="Checkpoint directory path.")
     parser.add_argument("--num_test",       type=int,  action="store",      default=64,           help="Number of data to test.")
     parser.add_argument("--precision",      type=str,  action="store",      default="fp16",       help="Inference precision.")
     args=parser.parse_args()
@@ -47,6 +44,11 @@ def predict_dog_prob_of_single_instance(model, tensor, device, precision):
 def main():
     args = parse_args()
     
+    # Root Folder
+    data_dir       = os.path.abspath(os.path.dirname(__file__))
+    test_data_dir  = f'{data_dir}/test'
+    checkpoint_dir = 'checkpoint'
+    
     # Detect CUDA-capable Device
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     
@@ -73,7 +75,7 @@ def main():
     model_conv  = torchvision.models.resnet50(weights=ResNet50_Weights.DEFAULT)
 
     # Define the checkpoint location to save the trained model
-    chk_dir     = f'{args.data_dir}/{args.checkpoint_dir}'
+    chk_dir     = f'{data_dir}/{checkpoint_dir}'
     check_point = f'{chk_dir}/model-checkpoint-{args.precision}.tar'
     
     # Parameters of newly constructed modules have requires_grad=True by default
@@ -103,18 +105,19 @@ def main():
     model_conv.eval()
         
     # Start the inference
-    test_data_files = os.listdir(args.test_data_dir)
+    test_data_files = os.listdir(test_data_dir)
         
     image_inferenced   = 0
+    print('Test directory: ' + f'{test_data_dir}')
     for fname in test_data_files :    
-        im         = Image.open(f'{args.test_data_dir}/{fname}')
+        im         = Image.open(f'{test_data_dir}/{fname}')
         imstar     = apply_test_transforms(im)    
         outputs    = predict_dog_prob_of_single_instance(model_conv, imstar, device, args.precision)
 
         if(outputs<0.5) :
-            print('Image ' + f'{args.test_data_dir}/{fname}' + ' is predicted as CAT with probability: ' + str(round((1-outputs)*100,2))+ '%')
+            print('Image ' + f'{fname}' + ' is predicted as CAT with probability: ' + str(round((1-outputs)*100,2))+ '%')
         else :
-            print('Image ' + f'{args.test_data_dir}/{fname}' + ' is predicted as DOG with probability: ' + str(round(outputs*100))+ '%') 
+            print('Image ' + f'{fname}' + ' is predicted as DOG with probability: ' + str(round(outputs*100))+ '%') 
         image_inferenced += 1
         if(image_inferenced>=args.num_test) :
             break
