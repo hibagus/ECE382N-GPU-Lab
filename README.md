@@ -56,10 +56,10 @@ In this lab, you will have hands-on experience profiling tools for GPU-accelerat
 
 In this section, we will briefly explain the basics of GPU architecture. Since we will use NVIDIA GPUs equipped with Tensor Cores in our lab, our explanation will be more focused on recent NVIDIA GPUs (Volta or newer generations). Still, the concepts can easily be extended to GPUs from other manufacturers (e.g., AMD, Intel). 
 
-Since most operations in graphics applications are highly parallel (i.e., primitives, fragments, and pixels can be processed in parallel during each stage of the graphics pipeline), GPUs have been designed as massively parallel processors to extract these parallelisms [2]. While early GPUs before the 2000s were fixed-function accelerators, they evolved to become more programmable: programmable shaders (early 2000s), unified shaders (early 2006), and general-purpose GPUs (2007) [4, 13-15]. The latter was started with the introduction of groundbreaking Tesla architecture in 2007 [6] which became the foundation of NVIDIA GPUs for almost two decades. Nowadays, GPUs are popular not only for graphics applications but also for accelerating diverse workloads with abundant parallelism, such as high-performance computing and machine learning applications. Figure 2 shows the relation between hardware and software perspectives in GPUs.  
+Since most operations in graphics applications are highly parallel (i.e., primitives, fragments, and pixels can be processed in parallel during each stage of the graphics pipeline), GPUs have been designed as massively parallel processors to extract these parallelisms [^2]. While early GPUs before the 2000s were fixed-function accelerators, they evolved to become more programmable: programmable shaders (early 2000s), unified shaders (early 2006), and general-purpose GPUs (2007) [^4], [^13], [^14], [^15]. The latter was started with the introduction of groundbreaking Tesla architecture in 2007 [^6] which became the foundation of NVIDIA GPUs for almost two decades. Nowadays, GPUs are popular not only for graphics applications but also for accelerating diverse workloads with abundant parallelism, such as high-performance computing and machine learning applications. Figure 2 shows the relation between hardware and software perspectives in GPUs.  
 
 #### Hardware perspective
-To signify its massively parallel architecture, manufacturers often advertise GPUs to have thousands of cores (i.e., CUDA Cores (CC) in NVIDIA GPUs, Stream Processors (SP) in AMD GPUs, or Vector Engines (XVE) in Intel GPUs.). However, the term _cores_ in GPUs is not the same as in CPUs; the term _cores_ in GPUs refers to the execution units (i.e., ALUs). These _cores_ are then grouped into one processor (Streaming Multiprocessor (SM) in NVIDIA GPUs, Compute Unit (CU) in AMD GPUs, Compute Slice (SLC) in Intel GPUs), which is called Streaming Multiprocessor (SM) in NVIDIA GPUs. NVIDIA GPU can have 100s of SMs, each with many _cores_, for a total of thousands of _cores_. A simplified illustration of an SM inside NVIDIA Volta is given in Figure 1 [3]. Interested readers should consult the whitepaper released by NVIDIA to find detailed SM architecture for each generation of NVIDIA GPUs: Volta [7], Turing [8], Ampere [9], Hopper [10], and Ada Lovelace [12]. 
+To signify its massively parallel architecture, manufacturers often advertise GPUs to have thousands of cores (i.e., CUDA Cores (CC) in NVIDIA GPUs, Stream Processors (SP) in AMD GPUs, or Vector Engines (XVE) in Intel GPUs.). However, the term _cores_ in GPUs is not the same as in CPUs; the term _cores_ in GPUs refers to the execution units (i.e., ALUs). These _cores_ are then grouped into one processor (Streaming Multiprocessor (SM) in NVIDIA GPUs, Compute Unit (CU) in AMD GPUs, Compute Slice (SLC) in Intel GPUs), which is called Streaming Multiprocessor (SM) in NVIDIA GPUs. NVIDIA GPU can have 100s of SMs, each with many _cores_, for a total of thousands of _cores_. A simplified illustration of an SM inside NVIDIA Volta is given in Figure 1 [^3]. Interested readers should consult the whitepaper released by NVIDIA to find detailed SM architecture for each generation of NVIDIA GPUs: Volta [^7], Turing [^8], Ampere [^9], Hopper [^10], and Ada Lovelace [^12]. 
 
 Each SM contains four SM sub-partitions (SMSP), L1 instruction cache, L1 data cache, shared memory, and texture cache. Starting from Volta, L1 data cache, texture cache, and shared memory are implemented as unified on-chip memory, giving the users flexibility on how on-chip memory should be managed; either 100% as cache (hardware-managed) or some portions of it as shared memory (user-managed). Users who choose to use shared memory must carefully manage its use since it will reduce the amount of L1 and texture cache, possibly degrading the performance. The L2 cache is shared for all SMs in GPU, and it interfaces directly with off-chip memory (e.g., GDDR or HBM). 
 
@@ -67,24 +67,24 @@ Each SMSP has its on-chip memory: L0 instruction cache, constant cache, and regi
 
 
 #### Software perspective
-GPU execution model is called Single-Instruction Multiple-Thread (SIMT), which is a modification to Single-Instruction Multiple-Data (SIMD) [6]. In addition to executing one instruction on multiple data, SIMT applies this one instruction to multiple independent threads in parallel. This allows programmers to write thread-parallel code for individual threads and data-parallel code for coordinated threads. A GPU-accelerated application, called kernel, can have millions of threads. This collection of threads is called a grid. Inside, the threads are grouped into thread blocks or cooperative thread arrays (CTAs). A grid can have as many as $2^{31}-1$ thread blocks, each contains up to 1024 threads. Theoretically, a kernel can have as many as 2 trillion threads! (i.e., $(2^{31}-1) \times 1024 = 2,199,023,254,528$) 
+GPU execution model is called Single-Instruction Multiple-Thread (SIMT), which is a modification to Single-Instruction Multiple-Data (SIMD) [^6]. In addition to executing one instruction on multiple data, SIMT applies this one instruction to multiple independent threads in parallel. This allows programmers to write thread-parallel code for individual threads and data-parallel code for coordinated threads. A GPU-accelerated application, called kernel, can have millions of threads. This collection of threads is called a grid. Inside, the threads are grouped into thread blocks or cooperative thread arrays (CTAs). A grid can have as many as $2^{31}-1$ thread blocks, each contains up to 1024 threads. Theoretically, a kernel can have as many as 2 trillion threads! (i.e., $(2^{31}-1) \times 1024 = 2,199,023,254,528$) 
 
 The global scheduler (i.e., Gigathread Engine) schedules each thread block into the available SM and manages the context switches of the thread blocks for each SM. Ideally, each SM should hold multiple thread blocks to allow for aggressive context switching; when one thread block stalls (e.g., due to memory access), it can run another thread block to hide the latency and keep the SM busy. Finally, each SMSP executes a warp of threads; the warp scheduler maps the threads within the warp to the cores, which then execute in a lock-step fashion. Any differences in the thread execution path (e.g., due to different branch outcomes) within the warp will cause thread divergence; instead of running in parallel, the threads within the warp will run serially based on their execution path, reducing computation efficiency. Note that thread divergence only occurs within the warp since each warp can be independently executed. 
 
 
 ### Tensor Cores
-In addition to CUDA Cores, Volta (2017) or newer generations of GPUs are equipped with Tensor Cores. Tensor Cores provide significant performance improvements over CUDA Cores for GEMM and GEMM-like operations. These operations are abundant in Machine Learning workloads, making GPUs popular accelerators. Other manufacturers included their version of Tensor Cores in their GPUs: AMD with Matrix Core (2020) [1] and Intel with XMX Matrix Engine (2022) [5].
+In addition to CUDA Cores, Volta (2017) or newer generations of GPUs are equipped with Tensor Cores. Tensor Cores provide significant performance improvements over CUDA Cores for GEMM and GEMM-like operations. These operations are abundant in Machine Learning workloads, making GPUs popular accelerators. Other manufacturers included their version of Tensor Cores in their GPUs: AMD with Matrix Core (2020) [^1] and Intel with XMX Matrix Engine (2022) [^5].
 
-Unlike CUDA Cores that run the instruction at the thread level, Tensor Cores run the instruction at warp level, performing **matrix multiply-accumulate (MMA)** operations per instruction. For instance, Volta [7] is equipped with first-generation Tensor Cores capable of multiplying two half-precision (FP16) 4x4 matrices, resulting in a 4x4 matrix, either in half- or full-precision (FP16 or FP32), in each clock cycle. This is accomplished using 64 matrix-accumulate (MAC) units arranged in 4x4x4 three-dimensional cube (i.e., four layers, each with four columns and four rows of MAC units). The instruction supported by Volta's Tensor Cores is `hmma.884`: half-precision MMA with instruction shape 8x8x4. Each of `hmma.884` instruction performs 512 floating-point operations (i.e., 256 fused-multiply-add operations). Two Tensor Cores in each Volta's SMSP work in tandem to execute one `hmma.884` instruction in four clock cycles (i.e., Peak performance calculation as follows: each SMSP has two Tensor Cores for a total of eight Tensor Cores per SM. With 80 SMs, there are 640 Tensor Cores in NVIDIA Tesla V100 running at 1597 MHz boost clock. Each Tensor Core can execute 64 FMAs per clock cycle or 128 flops per cycle, and hence, theoretical peak performance is $640 \times 64 \times 2 \times 1597 \times 10^6 = 130$ TFLOP/s. This is four times higher than CUDA Cores peak performance for FP16 at $32$ TFLOP/s).
+Unlike CUDA Cores that run the instruction at the thread level, Tensor Cores run the instruction at warp level, performing **matrix multiply-accumulate (MMA)** operations per instruction. For instance, Volta [^7] is equipped with first-generation Tensor Cores capable of multiplying two half-precision (FP16) 4x4 matrices, resulting in a 4x4 matrix, either in half- or full-precision (FP16 or FP32), in each clock cycle. This is accomplished using 64 matrix-accumulate (MAC) units arranged in 4x4x4 three-dimensional cube (i.e., four layers, each with four columns and four rows of MAC units). The instruction supported by Volta's Tensor Cores is `hmma.884`: half-precision MMA with instruction shape 8x8x4. Each of `hmma.884` instruction performs 512 floating-point operations (i.e., 256 fused-multiply-add operations). Two Tensor Cores in each Volta's SMSP work in tandem to execute one `hmma.884` instruction in four clock cycles (i.e., Peak performance calculation as follows: each SMSP has two Tensor Cores for a total of eight Tensor Cores per SM. With 80 SMs, there are 640 Tensor Cores in NVIDIA Tesla V100 running at 1597 MHz boost clock. Each Tensor Core can execute 64 FMAs per clock cycle or 128 flops per cycle, and hence, theoretical peak performance is $640 \times 64 \times 2 \times 1597 \times 10^6 = 130$ TFLOP/s. This is four times higher than CUDA Cores peak performance for FP16 at $32$ TFLOP/s).
 
-Subsequent generations of Tensor Cores support more precisions and larger instruction shapes. Turing [8] features second-generation Tensor Cores that add `hmma.1688` and `hmma.16816` that take 8 and 16 clock cycles to execute, respectively, using the same 4x4x4 MAC structure and two Tensor Cores per SMSP. They also support INT8, INT4, and INT1 precision accessible through the new `imma.8816`, `imma.8832`, and `bmma.88128` instructions, respectively. Ampere [9] features newly designed Tensor Cores with 256 MAC units arranged in 8x4x8 three-dimensional cuboid, making it incompatible with executing older `hmma.884` instruction. Although each SMSP only has one Tensor Core, it can execute `hmma.1688` and `hmma.16816` in 4 and 8 clock cycles, respectively. In addition, they add FP64 (`dmma.884`), TF32 (`hmma.1684` and `hmma.1688`), and BF16 (`hmma.1688` and `hmma.16816`) precisions and support for sparse matrix multiplication. Finally, four-generation Tensor Cores in Hopper [10] and Ada Lovelace [12] double the number of Ampere's Tensor Cores MAC units with 512 MAC units arranged in 8x4x16 three-dimensional cuboid. They have support for new quarter-precision (FP8) and new Tensor Cores instruction that run on warp-group (`GMMA`).
+Subsequent generations of Tensor Cores support more precisions and larger instruction shapes. Turing [8] features second-generation Tensor Cores that add `hmma.1688` and `hmma.16816` that take 8 and 16 clock cycles to execute, respectively, using the same 4x4x4 MAC structure and two Tensor Cores per SMSP. They also support INT8, INT4, and INT1 precision accessible through the new `imma.8816`, `imma.8832`, and `bmma.88128` instructions, respectively. Ampere [9] features newly designed Tensor Cores with 256 MAC units arranged in 8x4x8 three-dimensional cuboid, making it incompatible with executing older `hmma.884` instruction. Although each SMSP only has one Tensor Core, it can execute `hmma.1688` and `hmma.16816` in 4 and 8 clock cycles, respectively. In addition, they add FP64 (`dmma.884`), TF32 (`hmma.1684` and `hmma.1688`), and BF16 (`hmma.1688` and `hmma.16816`) precisions and support for sparse matrix multiplication. Finally, four-generation Tensor Cores in Hopper [^10] and Ada Lovelace [^12] double the number of Ampere's Tensor Cores MAC units with 512 MAC units arranged in 8x4x16 three-dimensional cuboid. They have support for new quarter-precision (FP8) and new Tensor Cores instruction that run on warp-group (`GMMA`).
 
 ### Kernel Profiling using NSight Compute
-While developing applications that run on GPUs is not a straightforward task, characterizing the runtime behavior, identifying the bottleneck, and optimizing the performance of such applications are quite another. It is crucial to have insight into the hardware activities to understand the runtime behavior of the codes, which is often a challenging but rewarding effort. NVIDIA provides a kernel profiling tool called NSight Compute (NCU) [11] to help collect hardware metrics to understand the runtime behavior of GPU kernels. NCU is included with CUDA Toolkit distribution and supports Volta and newer generations of GPUs.
+While developing applications that run on GPUs is not a straightforward task, characterizing the runtime behavior, identifying the bottleneck, and optimizing the performance of such applications are quite another. It is crucial to have insight into the hardware activities to understand the runtime behavior of the codes, which is often a challenging but rewarding effort. NVIDIA provides a kernel profiling tool called NSight Compute (NCU) [^11] to help collect hardware metrics to understand the runtime behavior of GPU kernels. NCU is included with CUDA Toolkit distribution and supports Volta and newer generations of GPUs.
 
 Snippet below shows the command used to check the NCU version and the available metrics. Note that every GPU and every version of NCU will have different metrics, and thus, it is wise to check them. **Specifically, we will use NCU shipped with CUDA Toolkit 12.2 or newer for this lab (i.e., NCU version 2023.2.0.0 or newer)**, making it easier to profile application that uses Tensor Cores.
 
-```
+```bash
 # Check NCU Version
 $ ncu --version
 NVIDIA (R) Nsight Compute Command Line Profiler
@@ -105,13 +105,13 @@ dram__bytes_read  Counter      byte         # of bytes read from DRAM
 
 Let's say we want to collect the total bytes transferred between the GPU and off-chip memory (DRAM), the kernel execution time, and the number of floating-point instructions executed in vector addition application. This application performs element-wise addition of 100 pairs of vectors (i.e., 200 vectors) where each vector has 2 billion elements. The snippet below shows the command how to achieve that scenario in NVIDIA A100 GPU.
 
-```
+```bash
 $ ncu --replay-mode application --metrics gpu__time_duration,dram__bytes,sm__sass_thread_inst_executed_op_fp32_pred_on --csv --print-summary per-kernel   --log-file profile_data.csv ./vectoradd 2000000000
 ```
 
 The snippet below shows the result of this profiling. 
 
-```
+```bash
 $ cat profile_data.csv
 ==PROF== Connected to process 3998654 (/raid/bagus/GPU_Lab/vectoradd)
 ==PROF== Disconnected from process 3998654
@@ -139,7 +139,7 @@ The names of the metrics we are interested in are put after `--metrics` argument
 
 
 
-If you choose to summarize the profiling report using `--print-summary per-kernel`, you will see four additional columns on your profiling report: `Invocations`, `Minimum`, `Maximum`, and `Average`. The `Invocations` indicates how many times the kernel is launched on GPU. In addition, the `Minimum`, `Maximum`, and `Average` indicate the minimum, maximum, and average value of a particular metric across all invocations of this kernel. In the case of the vector addition application mentioned before, the `add_vector` kernel is launched 100 times since 100 pairs of vectors need to be processed. Therefore, to find the aggregate value of a particular metric across all invocations, the number of invocations should be multiplied by the average value. For example, the total execution time of `add_vector` kernel is $100 \times 17,473,124.16~ns = 1,747,312,416~ns$.
+If you choose to summarize the profiling report using `--print-summary per-kernel`, you will see four additional columns on your profiling report: `Invocations`, `Minimum`, `Maximum`, and `Average`. The `Invocations` indicates how many times the kernel is launched on GPU. In addition, the `Minimum`, `Maximum`, and `Average` indicate the minimum, maximum, and average value of a particular metric across all invocations of this kernel. In the case of the vector addition application mentioned before, the `add_vector` kernel is launched 100 times since 100 pairs of vectors need to be processed. Therefore, to find the aggregate value of a particular metric across all invocations, the number of invocations should be multiplied by the average value. For example, the total execution time of `add_vector` kernel is $100 \times 17,473,124.16 ns = 1,747,312,416 ns$.
 
 You may also notice that each collected metric has four sub-metrics consisting of `.avg`, `.max`, `.min`, and `.sum` values. While these values are equal for `gpu__time_duration`, they are not for the other two metrics in this example. For `dram__bytes`, the `.sum` is the total bytes of data accessed in DRAM collected from all 40 memory channels (i.e., NVIDIA A100 GPU has five stacks of HBM2/HBM2e memory. Each stack has eight 128-bit memory channels.) in NVIDIA A100 GPU. The `.avg` gives the average bytes of data accessed in each memory channel (i.e., `.sum` divided by 40) while `.max` and `.min` give the maximum and minimum bytes of data accessed through the memory channels, respectively. On the other hand, the `.sum` sub-metric in `sm__sass_thread_inst_executed_op_fp32_pred_on` gives the total of all FP32 instructions executed from all 108 SMs in NVIDIA A100 GPU while `.avg` gives the average number of FP32 executed in each SM  (i.e., `.sum` divided by 108).
 
@@ -147,7 +147,7 @@ You may also notice that each collected metric has four sub-metrics consisting o
 ## Preparing Working Space (0 Point)
 Although this section is worth zero points, you must complete it to prepare your working directory for the experiment :). Please kindly follow the snippet below to clone the GitHub repository into your work directory at TACC and download the necessary files. It may take 10-15 minutes to run the `prepare_workspace.sh` script, so sit back and relax. When running the script, make sure that you have a stable connection. If you use system other than TACC, you may need to modify the provided scripts to fit your system. 
 
-```
+```bash
 # Go to your work directory at TACC
 $ cd $WORK
 
@@ -172,7 +172,7 @@ You will compare the characteristics of GEMM kernel provided by cuBLAS and CUTLA
 
 We have provided you with a wrapper program to run the GEMM kernel, so you don't have to create your own wrapper. Assuming your working space is correctly configured (Section~\ref{sec:Preparing_Working_Space}), this wrapper should have been compiled as binary at `kernel/bin/gemm_cuda_bench`. Snippet below gives some sample commands to interact with the wrapper. 
 
-```
+```bash
 # CUTLASS GEMM Kernel; problem size {2048,2048,2048}; FP16; Tensor Cores
 $ ./gemm_cuda_bench -M fp16 -A fp16 2048 2048 2048
 
@@ -207,7 +207,7 @@ We also provide an example for SLURM script to submit to TACC Lonestar6 (i.e., `
 ## Application Characterization (50 Points)
 In the second experiment, you are asked to profile the training of a machine learning model. To shorten the time needed, we will not train the model from scratch. Instead, we will take the pre-trained model and fine-tune it for our needs. We take the ResNet-50 model trained using the ImageNet dataset with 1000 classes and fine-tune it to classify the images of dogs and cats. You have been provided with a Python script, `application/train.py`, to fine-tune the model. Snippet below provides examples of using the training script. 
 
-```
+```bash
 # Run fine-tuning for 1 Epoch using full-precision (FP32)
 $ python train.py --precision fp32 --num_epoch 1
 
@@ -236,41 +236,41 @@ Below are your tasks for this experiment. Table~\ref{tab:sample_table_apps_1_3} 
     
 6. (**Bonus 10 points**) We also provide inference script (`application/infer.py`). To use this script, you must run the fine-tuning for at least 15-20 epochs (without any profiling) to generate the model checkpoint. Find out the inference GPU's runtime, achieved throughput, and arithmetic intensity for full-precision and mixed-precision inference. 
     
-Even with only one epoch, profiling can take a long time (2-4 hours), so it is highly recommended to use the SLURM script or tmux (interactive session) to avoid any interruption in case you lose connection to the TACC cluster. We also provide an example for SLURM script to submit to TACC Lonestar6 (i.e., \texttt{run\_ncu\_part2.slurm}).
+Even with only one epoch, profiling can take a long time (2-4 hours), so it is highly recommended to use the SLURM script or tmux (interactive session) to avoid any interruption in case you lose connection to the TACC cluster. We also provide an example for SLURM script to submit to TACC Lonestar6 (i.e., `run_ncu_part2.slurm`).
 
 
 <!-- ACKNOWLEDGEMENTS -->
 ## References
-1. Advanced Micro Devices. 2020. AMD CDNA Architecture. Whitepaper. Advanced Micro Devices, California, US. https:
+[^1] Advanced Micro Devices. 2020. AMD CDNA Architecture. Whitepaper. Advanced Micro Devices, California, US. https:
 //www.amd.com/system/files/documents/amd-cdna-whitepaper.pdf
-2. David Blythe. 2008. Rise of the Graphics Processor. Proc. IEEE 96, 5 (2008), 761–778. https://doi.org/10.1109/JPROC.2008.917718
-3. Jack Choquette, Olivier Giroux, and Denis Foley. 2018. Volta: Performance and Programmability. IEEE Micro 38, 2 (2018), 42–52.
+[^2] David Blythe. 2008. Rise of the Graphics Processor. Proc. IEEE 96, 5 (2008), 761–778. https://doi.org/10.1109/JPROC.2008.917718
+[^3] Jack Choquette, Olivier Giroux, and Denis Foley. 2018. Volta: Performance and Programmability. IEEE Micro 38, 2 (2018), 42–52.
 https://doi.org/10.1109/MM.2018.022071134
-4. William J. Dally, Stephen W. Keckler, and David B. Kirk. 2021. Evolution of the Graphics Processing Unit (GPU). IEEE Micro 41, 6
+[^4] William J. Dally, Stephen W. Keckler, and David B. Kirk. 2021. Evolution of the Graphics Processing Unit (GPU). IEEE Micro 41, 6
 (2021), 42–51. https://doi.org/10.1109/MM.2021.3113475
-5. H. Jiang. 2022. Intel’s Ponte Vecchio GPU : Architecture, Systems & Software. In 2022 IEEE Hot Chips 34 Symposium (HCS). IEEE
+[^5] H. Jiang. 2022. Intel’s Ponte Vecchio GPU : Architecture, Systems & Software. In 2022 IEEE Hot Chips 34 Symposium (HCS). IEEE
 Computer Society, Los Alamitos, CA, USA, 1–29. https://doi.org/10.1109/HCS55958.2022.9895631
-6. Erik Lindholm, John Nickolls, Stuart Oberman, and John Montrym. 2008. NVIDIA Tesla: A Unified Graphics and Computing
+[^6] Erik Lindholm, John Nickolls, Stuart Oberman, and John Montrym. 2008. NVIDIA Tesla: A Unified Graphics and Computing
 Architecture. IEEE Micro 28, 2 (2008), 39–55. https://doi.org/10.1109/MM.2008.31
-7. NVIDIA Corporation. 2017. NVIDIA Tesla V100 GPU Architecture: The World’s Most Advanced Data Center GPU. Whitepaper.
+[^7] NVIDIA Corporation. 2017. NVIDIA Tesla V100 GPU Architecture: The World’s Most Advanced Data Center GPU. Whitepaper.
 NVIDIA Corporation, California, US. https://images.nvidia.com/content/pdf/tesla/whitepaper/pascal-architecture-whitepaper.
 pdf
-8. NVIDIA Corporation. 2018. NVIDIA Turing GPU Architecture: Graphics Reinvented. Whitepaper. NVIDIA Corporation, California,
+[^8] NVIDIA Corporation. 2018. NVIDIA Turing GPU Architecture: Graphics Reinvented. Whitepaper. NVIDIA Corporation, California,
 US. https://images.nvidia.com/aem-dam/en-zz/Solutions/design-visualization/technologies/turing-architecture/NVIDIA-Turing-
 Architecture-Whitepaper.pdf
-9. NVIDIA Corporation. 2020. NVIDIA A100 Tensor Core GPU Architecture: Unprecedented Acceleration at Every Scale. Whitepa-
+[^9] NVIDIA Corporation. 2020. NVIDIA A100 Tensor Core GPU Architecture: Unprecedented Acceleration at Every Scale. Whitepa-
 per. NVIDIA Corporation, California, US. https://images.nvidia.com/aem-dam/en-zz/Solutions/data-center/nvidia-ampere-
 architecture-whitepaper.pdf
-10. NVIDIA Corporation. 2022. NVIDIA H100 Tensor Core GPU Architecture: Exceptional Performance, Scalability, and Security for
+[^10] NVIDIA Corporation. 2022. NVIDIA H100 Tensor Core GPU Architecture: Exceptional Performance, Scalability, and Security for
 The Data Center. Whitepaper. NVIDIA Corporation, California, US. https://resources.nvidia.com/en-us-tensor-core/gtc22-
 whitepaper-hopper
-11. NVIDIA Corporation. 2023. Nsight Compute CLI. https://docs.nvidia.com/nsight-compute/NsightComputeCli/index.html.
-12. NVIDIA Corporation. 2023. NVIDIA Ada GPU Architecture: Designed to deliver outstanding gaming and creating, professional
+[^11] NVIDIA Corporation. 2023. Nsight Compute CLI. https://docs.nvidia.com/nsight-compute/NsightComputeCli/index.html.
+[^12] NVIDIA Corporation. 2023. NVIDIA Ada GPU Architecture: Designed to deliver outstanding gaming and creating, professional
 graphics, AI, and compute performance. Whitepaper. NVIDIA Corporation, California, US. https://images.nvidia.com/aem-
 dam/Solutions/Data-Center/l4/nvidia-ada-gpu-architecture-whitepaper-v2.0.pdf
-13. Jon Peddie. 2023. The History of the GPU - Eras and Environment. Springer International Publishing, Cham. https://doi.org/10.
+[^13] Jon Peddie. 2023. The History of the GPU - Eras and Environment. Springer International Publishing, Cham. https://doi.org/10.
 1007/978-3-031-13581-1
-14. Jon Peddie. 2023. The History of the GPU - New Developments. Springer International Publishing, Cham. https://doi.org/10.1007/
+[^14] Jon Peddie. 2023. The History of the GPU - New Developments. Springer International Publishing, Cham. https://doi.org/10.1007/
 978-3-031-14047-1
-15. Jon Peddie. 2023. The History of the GPU - Steps to Invention. Springer International Publishing, Cham. https://doi.org/10.1007/978-
+[^15] Jon Peddie. 2023. The History of the GPU - Steps to Invention. Springer International Publishing, Cham. https://doi.org/10.1007/978-
 3-031-10968-3
