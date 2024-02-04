@@ -241,36 +241,36 @@ Even with only one epoch, profiling can take a long time (2-4 hours), so it is h
 
 <!-- ACKNOWLEDGEMENTS -->
 ## References
-[^1] Advanced Micro Devices. 2020. AMD CDNA Architecture. Whitepaper. Advanced Micro Devices, California, US. https:
+[^1]: Advanced Micro Devices. 2020. AMD CDNA Architecture. Whitepaper. Advanced Micro Devices, California, US. https:
 //www.amd.com/system/files/documents/amd-cdna-whitepaper.pdf
-[^2] David Blythe. 2008. Rise of the Graphics Processor. Proc. IEEE 96, 5 (2008), 761–778. https://doi.org/10.1109/JPROC.2008.917718
-[^3] Jack Choquette, Olivier Giroux, and Denis Foley. 2018. Volta: Performance and Programmability. IEEE Micro 38, 2 (2018), 42–52.
+[^2]: David Blythe. 2008. Rise of the Graphics Processor. Proc. IEEE 96, 5 (2008), 761–778. https://doi.org/10.1109/JPROC.2008.917718
+[^3]: Jack Choquette, Olivier Giroux, and Denis Foley. 2018. Volta: Performance and Programmability. IEEE Micro 38, 2 (2018), 42–52.
 https://doi.org/10.1109/MM.2018.022071134
-[^4] William J. Dally, Stephen W. Keckler, and David B. Kirk. 2021. Evolution of the Graphics Processing Unit (GPU). IEEE Micro 41, 6
+[^4]: William J. Dally, Stephen W. Keckler, and David B. Kirk. 2021. Evolution of the Graphics Processing Unit (GPU). IEEE Micro 41, 6
 (2021), 42–51. https://doi.org/10.1109/MM.2021.3113475
-[^5] H. Jiang. 2022. Intel’s Ponte Vecchio GPU : Architecture, Systems & Software. In 2022 IEEE Hot Chips 34 Symposium (HCS). IEEE
+[^5]: H. Jiang. 2022. Intel’s Ponte Vecchio GPU : Architecture, Systems & Software. In 2022 IEEE Hot Chips 34 Symposium (HCS). IEEE
 Computer Society, Los Alamitos, CA, USA, 1–29. https://doi.org/10.1109/HCS55958.2022.9895631
-[^6] Erik Lindholm, John Nickolls, Stuart Oberman, and John Montrym. 2008. NVIDIA Tesla: A Unified Graphics and Computing
+[^6]: Erik Lindholm, John Nickolls, Stuart Oberman, and John Montrym. 2008. NVIDIA Tesla: A Unified Graphics and Computing
 Architecture. IEEE Micro 28, 2 (2008), 39–55. https://doi.org/10.1109/MM.2008.31
-[^7] NVIDIA Corporation. 2017. NVIDIA Tesla V100 GPU Architecture: The World’s Most Advanced Data Center GPU. Whitepaper.
+[^7]: NVIDIA Corporation. 2017. NVIDIA Tesla V100 GPU Architecture: The World’s Most Advanced Data Center GPU. Whitepaper.
 NVIDIA Corporation, California, US. https://images.nvidia.com/content/pdf/tesla/whitepaper/pascal-architecture-whitepaper.
 pdf
-[^8] NVIDIA Corporation. 2018. NVIDIA Turing GPU Architecture: Graphics Reinvented. Whitepaper. NVIDIA Corporation, California,
+[^8]: NVIDIA Corporation. 2018. NVIDIA Turing GPU Architecture: Graphics Reinvented. Whitepaper. NVIDIA Corporation, California,
 US. https://images.nvidia.com/aem-dam/en-zz/Solutions/design-visualization/technologies/turing-architecture/NVIDIA-Turing-
 Architecture-Whitepaper.pdf
-[^9] NVIDIA Corporation. 2020. NVIDIA A100 Tensor Core GPU Architecture: Unprecedented Acceleration at Every Scale. Whitepa-
+[^9]: NVIDIA Corporation. 2020. NVIDIA A100 Tensor Core GPU Architecture: Unprecedented Acceleration at Every Scale. Whitepa-
 per. NVIDIA Corporation, California, US. https://images.nvidia.com/aem-dam/en-zz/Solutions/data-center/nvidia-ampere-
 architecture-whitepaper.pdf
-[^10] NVIDIA Corporation. 2022. NVIDIA H100 Tensor Core GPU Architecture: Exceptional Performance, Scalability, and Security for
+[^10]: NVIDIA Corporation. 2022. NVIDIA H100 Tensor Core GPU Architecture: Exceptional Performance, Scalability, and Security for
 The Data Center. Whitepaper. NVIDIA Corporation, California, US. https://resources.nvidia.com/en-us-tensor-core/gtc22-
 whitepaper-hopper
-[^11] NVIDIA Corporation. 2023. Nsight Compute CLI. https://docs.nvidia.com/nsight-compute/NsightComputeCli/index.html.
-[^12] NVIDIA Corporation. 2023. NVIDIA Ada GPU Architecture: Designed to deliver outstanding gaming and creating, professional
+[^11]: NVIDIA Corporation. 2023. Nsight Compute CLI. https://docs.nvidia.com/nsight-compute/NsightComputeCli/index.html.
+[^12]: NVIDIA Corporation. 2023. NVIDIA Ada GPU Architecture: Designed to deliver outstanding gaming and creating, professional
 graphics, AI, and compute performance. Whitepaper. NVIDIA Corporation, California, US. https://images.nvidia.com/aem-
 dam/Solutions/Data-Center/l4/nvidia-ada-gpu-architecture-whitepaper-v2.0.pdf
-[^13] Jon Peddie. 2023. The History of the GPU - Eras and Environment. Springer International Publishing, Cham. https://doi.org/10.
+[^13]: Jon Peddie. 2023. The History of the GPU - Eras and Environment. Springer International Publishing, Cham. https://doi.org/10.
 1007/978-3-031-13581-1
-[^14] Jon Peddie. 2023. The History of the GPU - New Developments. Springer International Publishing, Cham. https://doi.org/10.1007/
+[^14]: Jon Peddie. 2023. The History of the GPU - New Developments. Springer International Publishing, Cham. https://doi.org/10.1007/
 978-3-031-14047-1
-[^15] Jon Peddie. 2023. The History of the GPU - Steps to Invention. Springer International Publishing, Cham. https://doi.org/10.1007/978-
+[^15]: Jon Peddie. 2023. The History of the GPU - Steps to Invention. Springer International Publishing, Cham. https://doi.org/10.1007/978-
 3-031-10968-3
