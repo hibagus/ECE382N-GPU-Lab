@@ -1,49 +1,15 @@
-<!--
-*** Thanks for checking out the Best-README-Template. If you have a suggestion
-*** that would make this better, please fork the repo and create a pull request
-*** or simply open an issue with the tag "enhancement".
-*** Thanks again! Now go create something AMAZING! :D
--->
-
-
-
-<!-- PROJECT SHIELDS -->
-<!--
-*** I'm using markdown "reference style" links for readability.
-*** Reference links are enclosed in brackets [ ] instead of parentheses ( ).
-*** See the bottom of this document for the declaration of the reference variables
-*** for contributors-url, forks-url, etc. This is an optional, concise syntax you may use.
-*** https://www.markdownguide.org/basic-syntax/#reference-style-links
--->
-[![Contributors][contributors-shield]][contributors-url]
-[![Forks][forks-shield]][forks-url]
-[![Stargazers][stars-shield]][stars-url]
-[![Issues][issues-shield]][issues-url]
-[![MIT License][license-shield]][license-url]
-[![LinkedIn][linkedin-shield]][linkedin-url]
-
-
 
 <!-- PROJECT LOGO -->
 <br />
 <p align="center">
-  <a href="https://github.com/othneildrew/Best-README-Template">
-    <img src="images/logo.png" alt="Logo" width="80" height="80">
-  </a>
-
-  <h3 align="center">Best-README-Template</h3>
+  <h3 align="center">Lab 2: Workload Characterization and Performance Evaluation on GPUs</h3>
 
   <p align="center">
-    An awesome README template to jumpstart your projects!
+    ECE382N: Computer Performance Evaluation and Benchmarking (Spring 2024) 
     <br />
-    <a href="https://github.com/othneildrew/Best-README-Template"><strong>Explore the docs »</strong></a>
+    Lizy K. John, Lecturer
     <br />
-    <br />
-    <a href="https://github.com/othneildrew/Best-README-Template">View Demo</a>
-    ·
-    <a href="https://github.com/othneildrew/Best-README-Template/issues">Report Bug</a>
-    ·
-    <a href="https://github.com/othneildrew/Best-README-Template/issues">Request Feature</a>
+    Bagus Hanindhito and Ruihao Li, Teaching Assistants
   </p>
 </p>
 
@@ -78,37 +44,32 @@
 
 
 <!-- ABOUT THE PROJECT -->
-## About The Project
+## About Lab
 
-[![Product Name Screen Shot][product-screenshot]](https://example.com)
-
-There are many great README templates available on GitHub, however, I didn't find one that really suit my needs so I created this enhanced one. I want to create a README template so amazing that it'll be the last one you ever need -- I think this is it.
-
-Here's why:
-* Your time should be focused on creating something amazing. A project that solves a problem and helps others
-* You shouldn't be doing the same tasks over and over like creating a README from scratch
-* You should element DRY principles to the rest of your life :smile:
-
-Of course, no one template will serve all projects since your needs may be different. So I'll be adding more in the near future. You may also suggest changes by forking this repo and creating a pull request or opening an issue. Thanks to all the people have have contributed to expanding this template!
-
-A list of commonly used resources that I find helpful are listed in the acknowledgements.
-
-### Built With
-
-This section should list any major frameworks that you built your project using. Leave any add-ons/plugins for the acknowledgements section. Here are a few examples.
-* [Bootstrap](https://getbootstrap.com)
-* [JQuery](https://jquery.com)
-* [Laravel](https://laravel.com)
-
+In this lab, you will have hands-on experience profiling tools for GPU-accelerated applications. Specifically, we will use Nsight Compute (NCU) to perform kernel profiling and application profiling. For kernel profiling, we will take a look at the GEMM kernel provided by CUTLASS and cuBLAS. For application profiling, we will investigate machine learning training as well as inference as a bonus. **If you plan to use TACC to run your experiment, we strongly recommended to start early since there are a limited number of GPU-equipped compute node and the queues can be long.**
 
 
 <!-- GETTING STARTED -->
-## Getting Started
+## Introduction (0 Point)
 
-This is an example of how you may give instructions on setting up your project locally.
-To get a local copy up and running follow these simple example steps.
+### Basic GPU Architecture
 
-### Prerequisites
+In this section, we will briefly explain the basics of GPU architecture. Since we will use NVIDIA GPUs equipped with Tensor Cores in our lab, our explanation will be more focused on recent NVIDIA GPUs (Volta or newer generations). Still, the concepts can easily be extended to GPUs from other manufacturers (e.g., AMD, Intel). 
+
+Since most operations in graphics applications are highly parallel (i.e., primitives, fragments, and pixels can be processed in parallel during each stage of the graphics pipeline), GPUs have been designed as massively parallel processors to extract these parallelisms [2]. While early GPUs before the 2000s were fixed-function accelerators, they evolved to become more programmable: programmable shaders (early 2000s), unified shaders (early 2006), and general-purpose GPUs (2007) [4, 13-15]. The latter was started with the introduction of groundbreaking Tesla architecture in 2007 [6] which became the foundation of NVIDIA GPUs for almost two decades. Nowadays, GPUs are popular not only for graphics applications but also for accelerating diverse workloads with abundant parallelism, such as high-performance computing and machine learning applications. Figure 2 shows the relation between hardware and software perspectives in GPUs.  
+
+#### Hardware perspective
+To signify its massively parallel architecture, manufacturers often advertise GPUs to have thousands of cores (i.e., CUDA Cores (CC) in NVIDIA GPUs, Stream Processors (SP) in AMD GPUs, or Vector Engines (XVE) in Intel GPUs.). However, the term _cores_ in GPUs is not the same as in CPUs; the term _cores_ in GPUs refers to the execution units (i.e., ALUs). These _cores_ are then grouped into one processor (Streaming Multiprocessor (SM) in NVIDIA GPUs, Compute Unit (CU) in AMD GPUs, Compute Slice (SLC) in Intel GPUs), which is called Streaming Multiprocessor (SM) in NVIDIA GPUs. NVIDIA GPU can have 100s of SMs, each with many _cores_, for a total of thousands of _cores_. A simplified illustration of an SM inside NVIDIA Volta is given in Figure 1 [3]. Interested readers should consult the whitepaper released by NVIDIA to find detailed SM architecture for each generation of NVIDIA GPUs: Volta [7], Turing [8], Ampere [9], Hopper [10], and Ada Lovelace [12]. 
+
+Each SM contains four SM sub-partitions (SMSP), L1 instruction cache, L1 data cache, shared memory, and texture cache. Starting from Volta, L1 data cache, texture cache, and shared memory are implemented as unified on-chip memory, giving the users flexibility on how on-chip memory should be managed; either 100\% as cache (hardware-managed) or some portions of it as shared memory (user-managed). Users who choose to use shared memory must carefully manage its use since it will reduce the amount of L1 and texture cache, possibly degrading the performance. The L2 cache is shared for all SMs in GPU, and it interfaces directly with off-chip memory (e.g., GDDR or HBM). 
+
+Each SMSP has its on-chip memory: L0 instruction cache, constant cache, and register files. CUDA Cores (CC) are the default computation units inside the SMSP, which consist of FP64 units, FP32 units, INT32 units, and Special Function Units (SFUs). The number of FP32 units is used to advertise the number of CUDA Cores in GPUs. SFUs are used to compute transcendental functions such as trigonometric functions (e.g., sine, cosine), reciprocal, and square root. Compared to consumer-class GPUs, data-center-class GPUs feature significantly more FP64 units to handle HPC applications that use double precision for accuracy-sensitive computation. Starting from Volta architecture, specialized computation units called Tensor Cores (TC) are added to accelerate GEMM computation, which is abundant in many machine learning workloads. Tensor Cores will be briefly explained in Section~\ref{Introduction:Tensor_Cores}. 
+
+
+#### Software perspective
+GPU execution model is called Single-Instruction Multiple-Thread (SIMT), which is a modification to Single-Instruction Multiple-Data (SIMD) [6]. In addition to executing one instruction on multiple data, SIMT applies this one instruction to multiple independent threads in parallel. This allows programmers to write thread-parallel code for individual threads and data-parallel code for coordinated threads. A GPU-accelerated application, called kernel, can have millions of threads. This collection of threads is called a grid. Inside, the threads are grouped into thread blocks or cooperative thread arrays (CTAs). A grid can have as many as $2^{31}-1$ thread blocks, each contains up to 1024 threads. Theoretically, a kernel can have as many as 2 trillion threads\footnote{i.e., $(2^{31}-1) \times 1024 = 2,199,023,254,528$}! 
+
+The global scheduler (i.e., Gigathread Engine) schedules each thread block into the available SM and manages the context switches of the thread blocks for each SM. Ideally, each SM should hold multiple thread blocks to allow for aggressive context switching; when one thread block stalls (e.g., due to memory access), it can run another thread block to hide the latency and keep the SM busy. Finally, each SMSP executes a warp of threads; the warp scheduler maps the threads within the warp to the cores, which then execute in a lock-step fashion. Any differences in the thread execution path (e.g., due to different branch outcomes) within the warp will cause thread divergence; instead of running in parallel, the threads within the warp will run serially based on their execution path, reducing computation efficiency. Note that thread divergence only occurs within the warp since each warp can be independently executed. 
 
 This is an example of how to list things you need to use the software and how to install them.
 * npm
