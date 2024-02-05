@@ -20,24 +20,24 @@
   <summary>Table of Contents</summary>
   <ol>
     <li>
-      <a href="#about-the-project">About The Project</a>
-      <ul>
-        <li><a href="#built-with">Built With</a></li>
-      </ul>
+      <a href="#about-lab">About Lab</a>
     </li>
     <li>
-      <a href="#getting-started">Getting Started</a>
+      <a href="#introduction-(0-Point)">Introduction (0 Point)</a>
       <ul>
-        <li><a href="#prerequisites">Prerequisites</a></li>
-        <li><a href="#installation">Installation</a></li>
+        <li><a href="#basic-gpu-architecture">Basic GPU Architecture</a></li>
+        <ul>
+           <li><a href="#hardware-perspective">Hardware perspective</a></li>
+           <li><a href="#software-perspective">Software perspective</a></li>
+        </ul>
+        <li><a href="#tensor-cores">Tensor Cores</a></li>
+        <li><a href="#kernel-profiling-using-nsight-compute">Kernel Profiling using NSight Compute</a></li>
       </ul>
     </li>
-    <li><a href="#usage">Usage</a></li>
-    <li><a href="#roadmap">Roadmap</a></li>
-    <li><a href="#contributing">Contributing</a></li>
-    <li><a href="#license">License</a></li>
-    <li><a href="#contact">Contact</a></li>
-    <li><a href="#acknowledgements">Acknowledgements</a></li>
+    <li><a href="#preparing-working-space-(0-point)">Preparing Working Space (0 Point)</a></li>
+    <li><a href="#kernel-characterization-(50-points)">Kernel Characterization (50 Points)</a></li>
+    <li><a href="#application-characterization-(50-points)">Application Characterization (50 Points)</a></li>
+    <li><a href="#references">References</a></li>
   </ol>
 </details>
 
@@ -58,12 +58,16 @@ In this section, we will briefly explain the basics of GPU architecture. Since w
 
 Since most operations in graphics applications are highly parallel (i.e., primitives, fragments, and pixels can be processed in parallel during each stage of the graphics pipeline), GPUs have been designed as massively parallel processors to extract these parallelisms [^2]. While early GPUs before the 2000s were fixed-function accelerators, they evolved to become more programmable: programmable shaders (early 2000s), unified shaders (early 2006), and general-purpose GPUs (2007) [^4], [^13], [^14], [^15]. The latter was started with the introduction of groundbreaking Tesla architecture in 2007 [^6] which became the foundation of NVIDIA GPUs for almost two decades. Nowadays, GPUs are popular not only for graphics applications but also for accelerating diverse workloads with abundant parallelism, such as high-performance computing and machine learning applications. Figure 2 shows the relation between hardware and software perspectives in GPUs.  
 
+![Figure 1](images/SM_Structure.png "Fig. 1 Simplified illustration of the SM architecture inside NVIDIA Volta \cite{8344474}. Each SM is divided into four SM Subpartitions (SMSP), which contain CUDA Cores, Tensor Cores, register files, caches, and schedulers. Newer NVIDIA GPUs may have slightly different architecture to improve performance across generations.")
+
+![Figure 2](images/Hardware_Software_GPU.png "Fig. 2 GPU from software perspective (left) and hardware perspective (right)")
+
 #### Hardware perspective
 To signify its massively parallel architecture, manufacturers often advertise GPUs to have thousands of cores (i.e., CUDA Cores (CC) in NVIDIA GPUs, Stream Processors (SP) in AMD GPUs, or Vector Engines (XVE) in Intel GPUs.). However, the term _cores_ in GPUs is not the same as in CPUs; the term _cores_ in GPUs refers to the execution units (i.e., ALUs). These _cores_ are then grouped into one processor (Streaming Multiprocessor (SM) in NVIDIA GPUs, Compute Unit (CU) in AMD GPUs, Compute Slice (SLC) in Intel GPUs), which is called Streaming Multiprocessor (SM) in NVIDIA GPUs. NVIDIA GPU can have 100s of SMs, each with many _cores_, for a total of thousands of _cores_. A simplified illustration of an SM inside NVIDIA Volta is given in Figure 1 [^3]. Interested readers should consult the whitepaper released by NVIDIA to find detailed SM architecture for each generation of NVIDIA GPUs: Volta [^7], Turing [^8], Ampere [^9], Hopper [^10], and Ada Lovelace [^12]. 
 
 Each SM contains four SM sub-partitions (SMSP), L1 instruction cache, L1 data cache, shared memory, and texture cache. Starting from Volta, L1 data cache, texture cache, and shared memory are implemented as unified on-chip memory, giving the users flexibility on how on-chip memory should be managed; either 100% as cache (hardware-managed) or some portions of it as shared memory (user-managed). Users who choose to use shared memory must carefully manage its use since it will reduce the amount of L1 and texture cache, possibly degrading the performance. The L2 cache is shared for all SMs in GPU, and it interfaces directly with off-chip memory (e.g., GDDR or HBM). 
 
-Each SMSP has its on-chip memory: L0 instruction cache, constant cache, and register files. CUDA Cores (CC) are the default computation units inside the SMSP, which consist of FP64 units, FP32 units, INT32 units, and Special Function Units (SFUs). The number of FP32 units is used to advertise the number of CUDA Cores in GPUs. SFUs are used to compute transcendental functions such as trigonometric functions (e.g., sine, cosine), reciprocal, and square root. Compared to consumer-class GPUs, data-center-class GPUs feature significantly more FP64 units to handle HPC applications that use double precision for accuracy-sensitive computation. Starting from Volta architecture, specialized computation units called Tensor Cores (TC) are added to accelerate GEMM computation, which is abundant in many machine learning workloads. Tensor Cores will be briefly explained in Section~\ref{Introduction:Tensor_Cores}. 
+Each SMSP has its on-chip memory: L0 instruction cache, constant cache, and register files. CUDA Cores (CC) are the default computation units inside the SMSP, which consist of FP64 units, FP32 units, INT32 units, and Special Function Units (SFUs). The number of FP32 units is used to advertise the number of CUDA Cores in GPUs. SFUs are used to compute transcendental functions such as trigonometric functions (e.g., sine, cosine), reciprocal, and square root. Compared to consumer-class GPUs, data-center-class GPUs feature significantly more FP64 units to handle HPC applications that use double precision for accuracy-sensitive computation. Starting from Volta architecture, specialized computation units called Tensor Cores (TC) are added to accelerate GEMM computation, which is abundant in many machine learning workloads. Tensor Cores will be briefly explained in this [Section](#tensor-cores). 
 
 
 #### Software perspective
@@ -161,7 +165,7 @@ $ ./prepare_workspace.sh
 # Source environment variable
 source set_environment
 ```
-Since TACC only provides older NCU shipped with CUDA Toolkit 12.0, the script will download the necessary version of NCU for this experiment. After setting up your workspace, make sure that you source the script `set_environment` every time you open a terminal or submit a job to TACC using SLURM. It will set the correct path for NCU 2023.2.0 instead of using NCU provided by TACC. It will also activate the Python Virtual Environment required for Application Characterization (Section~\ref{sec:Application_Characterization}). Although you can prepare your working space using login node, all of the experiments must be done in GPU-equipped compute node (i.e., `gpu-a100` or `gpu-a100-dev` in Lonestar6).
+Since TACC only provides older NCU shipped with CUDA Toolkit 12.0, the script will download the necessary version of NCU for this experiment. After setting up your workspace, make sure that you source the script `set_environment` every time you open a terminal or submit a job to TACC using SLURM. It will set the correct path for NCU 2023.2.0 instead of using NCU provided by TACC. It will also activate the Python Virtual Environment required for [Application Characterization](#application-characterization-(50-points)). Although you can prepare your working space using login node, all of the experiments must be done in GPU-equipped compute node (i.e., `gpu-a100` or `gpu-a100-dev` in Lonestar6).
 
 
 
@@ -170,7 +174,7 @@ In the first experiment, you are asked to profile GEMM and GEMV kernels. GEMM st
 
 You will compare the characteristics of GEMM kernel provided by cuBLAS and CUTLASS. Although NVIDIA develops both libraries, only CUTLASS is open-source, while cuBLAS is close-source. CUTLASS provides a collection of C++ template headers for implementing GEMM operations. On the other hand, cuBLAS contains the collection of GEMM kernels hand-tuned at the assembly level for specific devices, problem dimensions, and target precision. cuBLAS uses heuristics to choose the most performant kernels for each usage case. 
 
-We have provided you with a wrapper program to run the GEMM kernel, so you don't have to create your own wrapper. Assuming your working space is correctly configured (Section~\ref{sec:Preparing_Working_Space}), this wrapper should have been compiled as binary at `kernel/bin/gemm_cuda_bench`. Snippet below gives some sample commands to interact with the wrapper. 
+We have provided you with a wrapper program to run the GEMM kernel, so you don't have to create your own wrapper. Assuming your working space is correctly [configured](#preparing-working-space-0-point), this wrapper should have been compiled as binary at `kernel/bin/gemm_cuda_bench`. Snippet below gives some sample commands to interact with the wrapper. 
 
 ```bash
 # CUTLASS GEMM Kernel; problem size {2048,2048,2048}; FP16; Tensor Cores
@@ -193,12 +197,16 @@ $ ./gemm_cuda_bench --help
 ```
 
 For the experiment, use the following problem sizes: GEMM $\{1024,1024,1024\}$, GEMM $\{32768,32768,32768\}$, GEMV $\{1024,1,1024\}$, and GEMV $\{32768,1,32768\}$. You are free to add another problem size if you wish. In your report, please state which metrics on NCU you use for collecting the data and write the name of the GEMM kernel (no need to put the full name of the kernel; the first 32 characters of the name are sufficient). With these four problem sizes, below are your tasks for this experiment. 
-Table~\ref{tab:sample_table_kernel_1_4} is a sample table for Problem 1 to Problem 4, while Table~\ref{tab:sample_table_kernel_5} is a sample table for Problem 5 for your reference. Feel free to modify the table as you wish. 
+Table 1 is a sample table for Problem 1 to Problem 4, while Table 2 is a sample table for Problem 5 for your reference. Feel free to modify the table as you wish. 
+
+![Table 1](images/Table_1.png "Table 1. Sample Table for Kernel Characterization Problem 1 to 4")
+
+![Table 2](images/Table_2.png "Table 2. Sample Table for Kernel Characterization Problem 5")
 
 1. (**10 points**) Compare the average kernel execution time between CUTLASS and cuBLAS for each problem size. Comparison should be done in both FP32 (CUDA Cores) and FP16 (Tensor Cores). Tabulate the data and make a bar chart showing this comparison. 
 2. (**10 points**) Calculate the achieved throughput (GFLOP/s) for CUTLASS and cuBLAS GEMM kernels for each problem size in both FP32 (CUDA Cores) and FP16 (Tensor Cores). Don't forget to count all floating-point operations on CUDA and Tensor Cores to derive the throughput. Tabulate the data and make a bar chart showing this comparison.
 3. (**10 points**) Calculate the arithmetic intensity (FLOP/byte) for CUTLASS and cuBLAS GEMM Kernels for each problem size in both FP32 (CUDA Cores) and FP16 (Tensor Cores). Use the total data transferred from/to DRAM as the data volume. Tabulate the data and make a bar chart showing this comparison.
-4. (**10 points**) Calculate L2 Cache MPKI (level-two-cache/LT\$) for CUTLASS and cuBLAS GEMM Kernels for each problem size in both FP32 (CUDA Cores) and FP16 (Tensor Cores). Tabulate the data and make a bar chart showing this comparison. 
+4. (**10 points**) Calculate L2 Cache MPKI (level-two-cache/LT$) for CUTLASS and cuBLAS GEMM Kernels for each problem size in both FP32 (CUDA Cores) and FP16 (Tensor Cores). Tabulate the data and make a bar chart showing this comparison. 
 5. (**10 points**) For GEMM $\{32768,32768,32768\}$, present the instruction mix (branch, integer, floating-point CUDA Cores, floating-point Tensor Cores, load/store) of both CUTLASS and cuBLAS GEMM kernels in both FP32 (CUDA Cores) and FP16 (Tensor Cores). You are free to add more classes of instructions. Tabulate the data and make a pie chart.
 
 We also provide an example for SLURM script to submit to TACC Lonestar6 (i.e., `run_ncu_part1.slurm`. Please start early, as the job queue in TACC can be quite unpredictable. It will take around 4 hours to collect all of the metrics in this experiment, so it is recommended that you first plan which metrics should be collected before writing the SLURM script. 
@@ -222,7 +230,11 @@ $ python train.py --profile
 $ python train.py --help
 ```
 
-Below are your tasks for this experiment. Table~\ref{tab:sample_table_apps_1_3} is a sample table for Problem 1 to Problem 3, while Table~\ref{tab:sample_table_apps_5} is a sample table for Problem 5 for your reference. Feel free to modify the table as you wish. **For profiling purposes, you only need to run the training for one epoch**.
+Below are your tasks for this experiment. Table 3 is a sample table for Problem 1 to Problem 3, while Table 4 is a sample table for Problem 5 for your reference. Feel free to modify the table as you wish. **For profiling purposes, you only need to run the training for one epoch**.
+
+![Table 3](images/Table_3.png "Table 3. Sample Table for Application Characterization Problem 1 to 3")
+
+![Table 4](images/Table_4.png "Table 4. Sample Table for Application Characterization Problem 5")
 
 1. (**10 points**) Compare the application's GPU runtime (i.e., the sum of the duration of all kernels) for full-precision and mixed-precision training. 
 2. (**10 points**) Calculate the application's achieved throughput (GFLOP/s) full-precision and mixed-precision training. Don't forget to count all floating-point operations on CUDA and Tensor Cores to derive the throughput.

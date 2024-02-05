@@ -115,9 +115,9 @@ def main():
         outputs    = predict_dog_prob_of_single_instance(model_conv, imstar, device, args.precision)
 
         if(outputs<0.5) :
-            print('Image ' + f'{fname}' + ' is predicted as CAT with probability: ' + str(round((1-outputs)*100,2))+ '%')
+            print('Image ' + f'{test_data_dir}/{fname}' + ' is predicted as CAT with probability: ' + str(round((1-outputs)*100,2))+ '%')
         else :
-            print('Image ' + f'{fname}' + ' is predicted as DOG with probability: ' + str(round(outputs*100))+ '%') 
+            print('Image ' + f'{test_data_dir}/{fname}' + ' is predicted as DOG with probability: ' + str(round(outputs*100))+ '%') 
         image_inferenced += 1
         if(image_inferenced>=args.num_test) :
             break
