@@ -23,7 +23,7 @@
       <a href="#about-lab">About Lab</a>
     </li>
     <li>
-      <a href="#introduction-(0-Point)">Introduction (0 Point)</a>
+      <a href="#introduction-0-Point">Introduction (0 Point)</a>
       <ul>
         <li><a href="#basic-gpu-architecture">Basic GPU Architecture</a></li>
         <ul>
@@ -34,9 +34,9 @@
         <li><a href="#kernel-profiling-using-nsight-compute">Kernel Profiling using NSight Compute</a></li>
       </ul>
     </li>
-    <li><a href="#preparing-working-space-(0-point)">Preparing Working Space (0 Point)</a></li>
-    <li><a href="#kernel-characterization-(50-points)">Kernel Characterization (50 Points)</a></li>
-    <li><a href="#application-characterization-(50-points)">Application Characterization (50 Points)</a></li>
+    <li><a href="#preparing-working-space-0-point">Preparing Working Space (0 Point)</a></li>
+    <li><a href="#kernel-characterization-50-points">Kernel Characterization (50 Points)</a></li>
+    <li><a href="#application-characterization-50-points">Application Characterization (50 Points)</a></li>
     <li><a href="#references">References</a></li>
   </ol>
 </details>
@@ -59,8 +59,10 @@ In this section, we will briefly explain the basics of GPU architecture. Since w
 Since most operations in graphics applications are highly parallel (i.e., primitives, fragments, and pixels can be processed in parallel during each stage of the graphics pipeline), GPUs have been designed as massively parallel processors to extract these parallelisms [^2]. While early GPUs before the 2000s were fixed-function accelerators, they evolved to become more programmable: programmable shaders (early 2000s), unified shaders (early 2006), and general-purpose GPUs (2007) [^4], [^13], [^14], [^15]. The latter was started with the introduction of groundbreaking Tesla architecture in 2007 [^6] which became the foundation of NVIDIA GPUs for almost two decades. Nowadays, GPUs are popular not only for graphics applications but also for accelerating diverse workloads with abundant parallelism, such as high-performance computing and machine learning applications. Figure 2 shows the relation between hardware and software perspectives in GPUs.  
 
 ![Figure 1](images/SM_Structure.png "Fig. 1 Simplified illustration of the SM architecture inside NVIDIA Volta \cite{8344474}. Each SM is divided into four SM Subpartitions (SMSP), which contain CUDA Cores, Tensor Cores, register files, caches, and schedulers. Newer NVIDIA GPUs may have slightly different architecture to improve performance across generations.")
+Fig. 1 Simplified illustration of the SM architecture inside NVIDIA Volta \cite{8344474}. Each SM is divided into four SM Subpartitions (SMSP), which contain CUDA Cores, Tensor Cores, register files, caches, and schedulers. Newer NVIDIA GPUs may have slightly different architecture to improve performance across generations.
 
 ![Figure 2](images/Hardware_Software_GPU.png "Fig. 2 GPU from software perspective (left) and hardware perspective (right)")
+Fig. 2 GPU from software perspective (left) and hardware perspective (right)
 
 #### Hardware perspective
 To signify its massively parallel architecture, manufacturers often advertise GPUs to have thousands of cores (i.e., CUDA Cores (CC) in NVIDIA GPUs, Stream Processors (SP) in AMD GPUs, or Vector Engines (XVE) in Intel GPUs.). However, the term _cores_ in GPUs is not the same as in CPUs; the term _cores_ in GPUs refers to the execution units (i.e., ALUs). These _cores_ are then grouped into one processor (Streaming Multiprocessor (SM) in NVIDIA GPUs, Compute Unit (CU) in AMD GPUs, Compute Slice (SLC) in Intel GPUs), which is called Streaming Multiprocessor (SM) in NVIDIA GPUs. NVIDIA GPU can have 100s of SMs, each with many _cores_, for a total of thousands of _cores_. A simplified illustration of an SM inside NVIDIA Volta is given in Figure 1 [^3]. Interested readers should consult the whitepaper released by NVIDIA to find detailed SM architecture for each generation of NVIDIA GPUs: Volta [^7], Turing [^8], Ampere [^9], Hopper [^10], and Ada Lovelace [^12]. 
