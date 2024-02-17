@@ -1,6 +1,9 @@
 SCRIPT=$(readlink --canonicalize --no-newline $BASH_SOURCE)
 SCRIPTPATH=$(dirname "$SCRIPT")
 
+echo "Activating GCC 9.1.0 Module from TACC..."
+module load gcc/9.1.0
+
 echo "Activating CUDA Toolkit 12.2 Module from TACC..."
 module load cuda/12.2
 
