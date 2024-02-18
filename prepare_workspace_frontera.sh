@@ -16,11 +16,12 @@ rm catdog.tar.gz
 
 echo "Setting-up Python Virtual Environment..."
 module load python3/3.9.2
-python3 -m venv application/venv
+python3 -m virtualenv application/venv
 echo "Activating Virtual Environment..."
 source application/venv/bin/activate
 echo "Downloading Python Packages..."
 pip3 install -r application/requirements.txt
+pip3 install urllib3==1.26.6
 
 echo "Cloning CUDA Bench Repository..."
 git submodule update --init --recursive
