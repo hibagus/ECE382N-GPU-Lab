@@ -172,7 +172,7 @@ Since TACC only provides older NCU shipped with CUDA Toolkit 12.0, the script wi
 
 
 ## Kernel Characterization (50 Points)
-In the first experiment, you are asked to profile GEMM and GEMV kernels. GEMM stands for general matrix multiply and is abundant in many workloads, including machine learning. The problem size of GEMM is usually denoted by $\{m,n,k\}$, which represents multiplication between matrix $A_{m \times n}$ and matrix $B_{n \times k}$ resulting in matrix $C_{m \times k}$. In addition, GEMV stands for general matrix-vector multiply and is a special case of GEMM where $n=1$ (i.e., $\{m,1,k\}$). 
+In the first experiment, you are asked to profile GEMM and GEMV kernels. GEMM stands for general matrix multiply and is abundant in many workloads, including machine learning. The problem size of GEMM is usually denoted by $\{m,n,k\}$, which represents multiplication between matrix $A_{m \times k}$ and matrix $B_{k \times n}$ resulting in matrix $C_{m \times n}$. In addition, GEMV stands for general matrix-vector multiply and is a special case of GEMM where $n=1$ (i.e., $\{m,1,k\}$). 
 
 You will compare the characteristics of GEMM kernel provided by cuBLAS and CUTLASS. Although NVIDIA develops both libraries, only CUTLASS is open-source, while cuBLAS is close-source. CUTLASS provides a collection of C++ template headers for implementing GEMM operations. On the other hand, cuBLAS contains the collection of GEMM kernels hand-tuned at the assembly level for specific devices, problem dimensions, and target precision. cuBLAS uses heuristics to choose the most performant kernels for each usage case. 
 
